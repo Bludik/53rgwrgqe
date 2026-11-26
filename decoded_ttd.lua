@@ -28532,6 +28532,8 @@ local window=KeroBrand.Bind(ui:CreateWindow(KeroBrand.Check({Title="Toilet Tower
     OpenButton={Title=KeroBrand.OpenButton,Enabled=true,Draggable=true,OnlyMobile=false}})),function()return H.Running end,H.Destroy,ui)
 H.Window=window
 do
+    local setCap=setfpscap or set_fps_cap or setfps
+    if type(setCap)=="function"then pcall(setCap,240)end
     local UIS=game:GetService("UserInputService")
     local function fixUiAndCursor()
         pcall(function()
