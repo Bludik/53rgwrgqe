@@ -28534,6 +28534,7 @@ H.Window=window
 do
     local setCap=setfpscap or set_fps_cap or setfps
     if type(setCap)=="function"then pcall(setCap,240)end
+    pcall(function()UserSettings():GetService("UserGameSettings").FramerateCap=240 end)
     local UIS=game:GetService("UserInputService")
     local function fixUiAndCursor()
         pcall(function()
