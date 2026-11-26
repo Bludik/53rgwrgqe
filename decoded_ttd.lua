@@ -26549,6 +26549,13 @@ return function(P, RS, WS, HTTP, E)
         -- Diagnostics only: never send routes found in unrelated GC tables.
         if H.CatalogHintJob==game.JobId then return H.CatalogHints end
         H.CatalogHintJob=game.JobId
+        local idFn=identifyexecutor or getexecutorname
+        local exName=""
+        if type(idFn)=="function"then local ok,v=pcall(idFn);if ok and type(v)=="string"then exName=v:lower()end end
+        if exName:find("xeno",1,true)or exName:find("solara",1,true)then
+            local out={Candidates={},Scanned=0,Limited=true,Available=false}
+            H.CatalogHints=out;return out
+        end
         local out={Candidates={},Scanned=0,Limited=false,Available=type(getgc)=="function"}
         H.CatalogHints=out
         if not out.Available then return out end
@@ -27868,11 +27875,16 @@ return function(config,createLedger,createView)
         if C.LastError~=message then C.LastError=message;warn("[AFK Dashboard/"..config.Key.."] "..message) end
     end
     function C.UI(fn,...)
-        local get=getthreadidentity or getidentity or get_thread_identity
-        local set=setthreadidentity or setidentity or set_thread_identity
+        local idFn=identifyexecutor or getexecutorname
+        local exName=""
+        if type(idFn)=="function"then local ok,v=pcall(idFn);if ok and type(v)=="string"then exName=v:lower()end end
         local old,changed
-        if type(get)=="function" and type(set)=="function" then
-            local ok,id=pcall(get);if ok and type(id)=="number" and id~=8 and pcall(set,8)then old,changed=id,true end
+        if not exName:find("xeno",1,true)and not exName:find("solara",1,true)then
+            local get=getthreadidentity or getidentity or get_thread_identity
+            local set=setthreadidentity or setidentity or set_thread_identity
+            if type(get)=="function" and type(set)=="function" then
+                local ok,id=pcall(get);if ok and type(id)=="number" and id~=8 and pcall(set,8)then old,changed=id,true end
+            end
         end
         local ok,value=pcall(fn,...);if changed then pcall(set,old)end
         if not ok then failure("UI",value)end;return ok,value
@@ -28897,12 +28909,17 @@ function H.UpdateUIBody()
     H.Syncing=false
 end
 function H.UpdateUI()
-    local read=getthreadidentity or getidentity or get_thread_identity
+    local idFn=identifyexecutor or getexecutorname
+    local exName=""
+    if type(idFn)=="function"then local ok,v=pcall(idFn);if ok and type(v)=="string"then exName=v:lower()end end
     local set=setthreadidentity or setidentity or set_thread_identity
     local previous,changed
-    if type(read)=="function"and type(set)=="function"then
-        local ok,value=pcall(read)
-        if ok and type(value)=="number"then previous=value;changed=pcall(set,8)end
+    if not exName:find("xeno",1,true)and not exName:find("solara",1,true)then
+        local read=getthreadidentity or getidentity or get_thread_identity
+        if type(read)=="function"and type(set)=="function"then
+            local ok,value=pcall(read)
+            if ok and type(value)=="number"then previous=value;changed=pcall(set,8)end
+        end
     end
     local ok,why=pcall(H.UpdateUIBody)
     H.Syncing=false
