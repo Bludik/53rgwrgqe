@@ -28086,7 +28086,7 @@ return function(config,createLedger,createView)
     function C.BuildBlack()
         local screen=Instance.new("ScreenGui");C.Gui=screen
         screen.Name="KeroBlackScreen_"..tostring(config.Key)
-        screen.IgnoreGuiInset=true;screen.ResetOnSpawn=false;screen.DisplayOrder=2147483647
+        screen.IgnoreGuiInset=false;screen.ResetOnSpawn=false;screen.DisplayOrder=5
         screen.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
         local background=Instance.new("Frame");background.Size=UDim2.fromScale(1,1)
         background.BackgroundColor3=Color3.new(0,0,0);background.BorderSizePixel=0;background.Active=true;background.Parent=screen
@@ -28317,7 +28317,7 @@ return function(C,config)
     end
     function C.Build()
         local screen = make("ScreenGui", {Name = "KeroAFKDashboard_" .. config.Key, ResetOnSpawn = false,
-            IgnoreGuiInset = true, DisplayOrder = 2147483647, ZIndexBehavior = Enum.ZIndexBehavior.Sibling}, nil)
+            IgnoreGuiInset = false, DisplayOrder = 5, ZIndexBehavior = Enum.ZIndexBehavior.Sibling}, nil)
         C.Gui, C.Nodes, C.TextCache, C.ViewHasFifth = screen, {}, {}, nil
         local playerGui = P:FindFirstChildOfClass("PlayerGui")
         local parents = {}
@@ -28525,6 +28525,36 @@ local window=KeroBrand.Bind(ui:CreateWindow(KeroBrand.Check({Title="Toilet Tower
     Folder="KeroToiletTD",Icon="tower-control",Size=UDim2.fromOffset(620,500),Theme="Dark",Transparent=true,ToggleKey=Enum.KeyCode.RightShift,
     OpenButton={Title=KeroBrand.OpenButton,Enabled=true,Draggable=true,OnlyMobile=false}})),function()return H.Running end,H.Destroy,ui)
 H.Window=window
+do
+    local UIS=game:GetService("UserInputService")
+    local function fixUiAndCursor()
+        pcall(function()
+            if UIS.MouseBehavior==Enum.MouseBehavior.LockCenter then
+                UIS.MouseBehavior=Enum.MouseBehavior.Default
+            end
+            UIS.MouseIconEnabled=true
+        end)
+        local containers={}
+        if type(gethui)=="function"then local ok,g=pcall(gethui);if ok and g then containers[#containers+1]=g end end
+        local okCore,core=pcall(game.GetService,game,"CoreGui");if okCore and core then containers[#containers+1]=core end
+        local pg=P:FindFirstChildOfClass("PlayerGui");if pg then containers[#containers+1]=pg end
+        for _,c in ipairs(containers)do
+            for _,child in ipairs(c:GetChildren())do
+                if child:IsA("ScreenGui")and(child.Name:find("WindUI",1,true)or child.Name:find("Kero",1,true))then
+                    pcall(function()
+                        if child.DisplayOrder>10 then child.DisplayOrder=5 end
+                        for _,desc in ipairs(child:GetDescendants())do
+                            if desc:IsA("GuiButton")and desc.Modal then desc.Modal=false end
+                        end
+                    end)
+                end
+            end
+        end
+    end
+    task.spawn(function()
+        for _=1,10 do fixUiAndCursor();task.wait(0.5)end
+    end)
+end
 H.S.AutoReplay=F.Settings.AfterMatch=="Replay"
 local lobby=window:Tab({Title="Lobby",Icon="door-open"})
 local match=window:Tab({Title="Match",Icon="map"})
