@@ -6,7 +6,7 @@ do
   local ok, value = pcall(identify)
   if ok and type(value) == "string" then executor = value:lower() end
  end
- local blocked = executor:match("%f[%a]xeno%f[%A]") or executor:match("%f[%a]solara%f[%A]")
+ local blocked = false -- Xeno/Solara allowed
  if blocked then
   print("[KERO HUB] Stop Using Xeno And Solara Baka")
   pcall(function()
@@ -27710,11 +27710,12 @@ return function(H,P,RS,WS,HTTP,E,contracts)
         local queue=queue_on_teleport or queueonteleport or syn and syn.queue_on_teleport
         if type(queue)~="function"then return false,"queue_on_teleport is unavailable"end
         local code=[[if not game:IsLoaded()then game.Loaded:Wait()end
+local P=game:GetService("Players")
+while not P.LocalPlayer do task.wait(0.1)end
+task.wait(1)
 local settings="ToiletTD_Macros/Settings.json"
-if isfile(settings)then local ok,s=pcall(function()return game:GetService("HttpService"):JSONDecode(readfile(settings))end);if ok and type(s)=="table"and s.AutoExecute==false then return end end
-local path="ToiletTD_Macros/FullLocal/Hub.lua"
-if isfile(path)then return assert(loadstring(readfile(path),"KeroTTD.FullLocal"))()end
-warn("[Kero TTD] Local test file missing; execute Kero_Toilet_TD_Full_Local.lua again")]]
+if type(isfile)=="function"and isfile(settings)then local ok,s=pcall(function()return game:GetService("HttpService"):JSONDecode(readfile(settings))end);if ok and type(s)=="table"and s.AutoExecute==false then return end end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Bludik/53rgwrgqe/main/decoded_ttd.lua"))()]]
         local good,why=pcall(queue,code);if good then H.TeleportQueued=true end;return good,why
     end
     H.QueueTeleport=F.QueueLocal
@@ -29039,6 +29040,7 @@ task.spawn(function()
         else H.SetStatus("Missing playback routes: "..table.concat(missing,", ")..". Export Debug.")end
         F.Bind(framework)
         H.StartWorkers()
+        pcall(H.QueueTeleport)
     end)
     if not ok and H.Running then H.Fail(why)end
 end)
