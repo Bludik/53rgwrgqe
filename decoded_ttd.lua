@@ -26505,6 +26505,10 @@ return function(P, RS, WS, HTTP, E)
                 end
             else
                 if stats.Functions>=60 then stats.Limited=true;return end;stats.Functions=stats.Functions+1
+                local idFn=identifyexecutor or getexecutorname
+                local exName=""
+                if type(idFn)=="function"then local ok,v=pcall(idFn);if ok and type(v)=="string"then exName=v:lower()end end
+                if exName:find("xeno",1,true)or exName:find("solara",1,true)then return end
                 local constants=getconstants or debug and debug.getconstants
                 if node and type(constants)=="function"then
                     local ok,values=pcall(constants,value)
