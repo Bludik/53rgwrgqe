@@ -26908,7 +26908,11 @@ return function(H,P,RS,WS,HTTP,E)
     -- The user's Debug.json confirms the second match place at wave 6.
     local matchPlaces={[14082129854]=true,[131703399727686]=true}
     function H.AcceptsMacroPlace(id)return matchPlaces[id]==true end
-    function H.IsMatch()return H.AcceptsMacroPlace(game.PlaceId)end
+    function H.IsMatch()
+        if H.AcceptsMacroPlace(game.PlaceId)then return true end
+        local md=RS:FindFirstChild("MatchData")
+        return md~=nil and md:FindFirstChild("CurrentWave")~=nil
+    end
     H.Round=1;H.SnapshotDirty=true;H.UnitConnections={};H.Widgets={}
     H.RuntimeIdentifiers={
         Replay="RE_0c911ec31911c72ec93be71925e7ff69e60553031e1efce16eb50ac8271853e5",
@@ -27161,14 +27165,20 @@ local run,err=loadstring(s,"ToiletTDHub");assert(run,err);run()]]
         local ok,why=pcall(queue,code);if ok then H.TeleportQueued=true end;return ok,why
     end
     local function fireGuiButton(button)
+        if not button then return false end
+        if not button:IsA("GuiButton")then
+            button=button:FindFirstChildWhichIsA("GuiButton",true)
+            if not button then return false end
+        end
         local fired=false
         for _,sigName in ipairs({"Activated","MouseButton1Click"})do
-            local sig=button[sigName]
-            if sig then
+            local okSig,sig=pcall(function()return button[sigName]end)
+            if okSig and sig then
                 if type(firesignal)=="function"then
                     local ok=pcall(firesignal,sig)
                     if ok then fired=true end
-                elseif type(getconnections)=="function"then
+                end
+                if not fired and type(getconnections)=="function"then
                     local ok,conns=pcall(getconnections,sig)
                     if ok and type(conns)=="table"then
                         for _,conn in ipairs(conns)do
@@ -27282,7 +27292,7 @@ local run,err=loadstring(s,"ToiletTDHub");assert(run,err);run()]]
         end
         local wave=H.Wave()
         if not canSkip or H.MatchEnded or not H.IsMatch()then H.SkipState=nil;H.SkipNextTry=nil;return end
-        if H.Playing and H.PlaybackHasSkip or not H.S.AutoSkip or not H.Running or not H.Network then return end
+        if H.Playing and H.PlaybackHasSkip or not H.S.AutoSkip or not H.Running then return end
         if H.SkipState and(H.SkipState.Round~=H.Round or H.SkipState.Wave~=wave)then H.SkipState=nil end
         local voters=skip and skip:FindFirstChild("VotedPlayers")
         local voted=voters and voters:FindFirstChild(tostring(P.UserId))~=nil
@@ -27318,7 +27328,8 @@ local run,err=loadstring(s,"ToiletTDHub");assert(run,err);run()]]
         end
     end
     function H.MatchStep()
-        if not H.IsMatch()or not H.Network then return end
+        if not H.IsMatch()then return end
+        if not H.Network then H.AutoSkipStep();return end
         local ended=H.Visible(H.FinishFrame());local clock=H.Value(RS:FindFirstChild("MatchData"),"MatchTimer")
         local wave=H.Wave()
         if ended and not H.MatchEnded then
