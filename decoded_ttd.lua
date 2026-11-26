@@ -27181,11 +27181,13 @@ local run,err=loadstring(s,"ToiletTDHub");assert(run,err);run()]]
         return fired
     end
     function H.SkipVote(preferButton)
-        if not preferButton then
+        if not preferButton and (not H.SkipRouteFailedAt or os.clock()-H.SkipRouteFailedAt>15)then
             local routes=H.ResolveRuntimeRoutes({Skip=true})
             if routes.Skip and H.Remote and H.Remote:IsA("RemoteEvent")then
                 local ok,why=H.Send(routes.Skip)
                 if ok then return ok,why,"DataRemote batch"end
+            else
+                H.SkipRouteFailedAt=os.clock()
             end
         end
         local skipFrame=H.Child(P:FindFirstChild("PlayerGui"),"Match","MatchInfo","TopText","SkipWave")
@@ -27372,13 +27374,17 @@ local run,err=loadstring(s,"ToiletTDHub");assert(run,err);run()]]
                     end
                 end)
                 if not ok then H.Fail(why)end
-                task.wait(.015)
+                task.wait(H.Recording and .015 or .25)
             end
         end)
         task.spawn(function()
+            local lastUiAt=0
             while H.Running do
                 local ok,why=pcall(H.MatchStep);if not ok then H.Log("MatchWorkerError",{Reason=tostring(why)});H.Debug()end
-                pcall(H.KeepCobaltHidden);pcall(H.UpdateUI);task.wait(.15)
+                if E.Cobalt then pcall(H.KeepCobaltHidden)end
+                local now=os.clock()
+                if now-lastUiAt>=0.5 then lastUiAt=now;pcall(H.UpdateUI)end
+                task.wait(.25)
             end
         end)
     end
@@ -27751,7 +27757,7 @@ warn("[Kero TTD] Local test file missing; execute Kero_Toilet_TD_Full_Local.lua 
                 if F.UpdateUI then
                     if H.AFKDashboard then H.AFKDashboard.UI(F.UpdateUI)else pcall(F.UpdateUI)end
                 end
-                task.wait(.5)
+                task.wait(.75)
             end
         end)
     end
@@ -28175,7 +28181,7 @@ return function(config,createLedger,createView)
     C.GlobalConnections[#C.GlobalConnections+1]=RS.Heartbeat:Connect(function()
         if not C.Alive then return end
         if config.IsRunning and not config.IsRunning()or config.Owner.Running==false then C.Destroy();return end
-        local now=os.clock();if now-lastTick<.5 then return end;lastTick=now
+        local now=os.clock();if now-lastTick<(C.Gui and .5 or 1.0)then return end;lastTick=now
         C.Session.Tick();local ok,why=pcall(C.Observe);if not ok then observing=false;failure("Observe",why)end
         if now-lastSave>=5 then lastSave=now;C.Persist()end
         if C.Gui then C.UI(C.Update)end
