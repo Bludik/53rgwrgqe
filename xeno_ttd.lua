@@ -6,7 +6,6 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 local Players = game:GetService("Players")
 local RS = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
 
 local P = Players.LocalPlayer
 while not P do
@@ -18,7 +17,6 @@ end
 do
     local setCap = setfpscap or set_fps_cap or setfps
     if type(setCap) == "function" then pcall(setCap, 240) end
-    pcall(function() UserSettings():GetService("UserGameSettings").FramerateCap = 240 end)
 end
 
 -- Prevent duplicate instances
@@ -70,18 +68,11 @@ local function queueTeleport()
     if not State.AutoExecute or State.TeleportQueued then return end
     local queue = queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)
     if type(queue) ~= "function" then return end
-    local code = [[
-if not game:IsLoaded() then game.Loaded:Wait() end
-local P = game:GetService("Players")
-while not P.LocalPlayer do task.wait(0.1) end
-task.wait(1)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Bludik/53rgwrgqe/main/xeno_ttd.lua"))()
-]]
+    local code = 'if not game:IsLoaded() then game.Loaded:Wait() end task.wait(2) loadstring(game:HttpGet("https://raw.githubusercontent.com/Bludik/53rgwrgqe/main/xeno_ttd.lua"))()'
     local ok = pcall(queue, code)
     if ok then State.TeleportQueued = true end
 end
 
-pcall(queueTeleport)
 if P.OnTeleport then
     State.Connections[#State.Connections + 1] = P.OnTeleport:Connect(function(tpState)
         if tpState == Enum.TeleportState.Started then pcall(queueTeleport) end
@@ -147,14 +138,12 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local parented = false
 local candidates = {}
+local pg = P:FindFirstChildOfClass("PlayerGui") or P:WaitForChild("PlayerGui", 10)
+if pg then candidates[#candidates + 1] = pg end
 if type(gethui) == "function" then
     local ok, h = pcall(gethui)
     if ok and h then candidates[#candidates + 1] = h end
 end
-local okCore, coreGui = pcall(function() return game:GetService("CoreGui") end)
-if okCore and coreGui then candidates[#candidates + 1] = coreGui end
-local pg = P:FindFirstChildOfClass("PlayerGui") or P:WaitForChild("PlayerGui", 10)
-if pg then candidates[#candidates + 1] = pg end
 
 for _, parent in ipairs(candidates) do
     if pcall(function() gui.Parent = parent end) and gui.Parent == parent then
@@ -267,8 +256,9 @@ closeBtn.Activated:Connect(State.Destroy)
 State.Connections[#State.Connections + 1] = P.Idled:Connect(function()
     if State.Running and State.AntiAFK then
         pcall(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
+            local vu = game:GetService("VirtualUser")
+            vu:CaptureController()
+            vu:ClickButton2(Vector2.new())
         end)
     end
 end)
